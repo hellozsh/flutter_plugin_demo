@@ -14,33 +14,14 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
+  DemoFunction _demoFunction;
 
   @override
   void initState() {
     super.initState();
-    initPlatformState();
+    _demoFunction = DemoFunction();
   }
 
-  // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initPlatformState() async {
-    String platformVersion;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    try {
-//      platformVersion = await ZshDemo.platformVersion;
-    } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
-    }
-
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
-
-    setState(() {
-      _platformVersion = platformVersion;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,8 +30,50 @@ class _MyAppState extends State<MyApp> {
         appBar: AppBar(
           title: const Text('Plugin example app'),
         ),
-        body: Center(
-          child: Text('Running on: $_platformVersion\n'),
+        body: Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            Container(
+              height: 40,
+              child:
+              InkWell(
+                onTap: (){
+                  _demoFunction.flutterToNative();
+                },
+                child: Text("发送一个无参数无返回值消息给原生"),
+              ),
+            ),
+            Container(
+              height: 40,
+              child:
+              InkWell(
+                onTap: (){
+                  _demoFunction.flutterToNativeWith("flutter").then((value) {
+
+//                     ToastUtils.toast("接收到原生返回值是: $value");
+                  });
+                },
+                child: Text('发送一个有参数有返回值消息给原生'),
+              ),
+            ),
+            StreamBuilder<String>(
+                stream:_demoFunction.nativeToFlutterStream(),
+                initialData: "",
+                builder: (c, snapshot) {
+                  final text = snapshot.data;
+
+                  return Container(
+                    height: 40,
+                    child:
+                    Text((snapshot?.data != null) ? '收到原生调用来的带参数方法，参数为: $text' : ""),
+                  );
+                }),
+            Container(
+              height: 40,
+              child: LabelWidget("flutter端写的参数"),
+            )
+          ],
         ),
       ),
     );

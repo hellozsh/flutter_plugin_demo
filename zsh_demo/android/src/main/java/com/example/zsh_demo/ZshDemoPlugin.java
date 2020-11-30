@@ -2,6 +2,7 @@ package com.example.zsh_demo;
 
 import androidx.annotation.NonNull;
 
+import io.flutter.Log;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -25,12 +26,13 @@ public class ZshDemoPlugin implements FlutterPlugin, MethodCallHandler {
   @Override
   public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
 
-    if (call.method.equals("sendSimpleText")) {
+    if (call.method.equals("flutterToNative")) {
 
+      Log.e("zhousuhua", "安卓 flutterToNative 无参数");
       result.success(null);
-    } else if (call.method.equals("sendText")) {
+    } else if (call.method.equals("flutterToNativeWith")) {
 
-      System.out.println("安卓 sendText 参数"+call.arguments.toString());
+      Log.e("zhousuhua", "安卓 flutterToNativeWith 参数"+call.arguments.toString());
       result.success(true);
     } else {
       result.notImplemented();
