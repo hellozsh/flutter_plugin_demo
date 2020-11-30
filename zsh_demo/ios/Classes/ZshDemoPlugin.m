@@ -1,9 +1,42 @@
 #import "ZshDemoPlugin.h"
 #import "LabelViewFactory.h"
 
-@implementation ZshDemoPlugin
+ 
+@interface ReceiveStreamHandler : NSObject <FlutterStreamHandler>
+
+@property (nonatomic, strong) FlutterEventSink sink;
+
+@end
+
+@implementation ReceiveStreamHandler
+
+- (FlutterError * _Nullable)onCancelWithArguments:(id _Nullable)arguments {
+    
+    self.sink = nil;
+    return nil;
+}
+
+- (FlutterError * _Nullable)onListenWithArguments:(id _Nullable)arguments eventSink:(nonnull FlutterEventSink)events {
+    
+    self.sink = events;
+    return  nil;
+}
+
+@end
 
 NSString *const NAMESPACE = @"plugins.zsh.com/zsh_demo";
+
+
+@interface ZshDemoPlugin() {
+    
+    int _time;
+}
+
+@property (nonatomic, strong) ReceiveStreamHandler *streamHandler;
+
+@end
+
+@implementation ZshDemoPlugin
 
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
     
@@ -17,12 +50,21 @@ NSString *const NAMESPACE = @"plugins.zsh.com/zsh_demo";
     
     [registrar addApplicationDelegate:instance];
     
-    
+    /// factory的注册
     LabelViewFactory* webviewFactory =
          [[LabelViewFactory alloc] initWithMessenger:registrar.messenger];
-    
     NSString *viewType = [NSString stringWithFormat:@"%@/labelView",NAMESPACE];
     [registrar registerViewFactory:webviewFactory withId:viewType];
+    
+    /// EventChannel的注册
+    NSString *eventString = [NSString stringWithFormat:@"%@/receive",NAMESPACE];
+    FlutterEventChannel *receiveChannel = [FlutterEventChannel eventChannelWithName:eventString binaryMessenger:registrar.messenger];
+    ReceiveStreamHandler *handler = [[ReceiveStreamHandler alloc] init];
+    [receiveChannel setStreamHandler:handler];
+    instance.streamHandler = handler;
+ 
+    /// 这里模拟来消息,每隔10分钟,给sink添加数据
+    [instance timer];
 }
 
 // 处理代码,返回
@@ -36,14 +78,16 @@ NSString *const NAMESPACE = @"plugins.zsh.com/zsh_demo";
         result(nil);
     } else if ([@"flutterToNativeWith" isEqualToString:call.method]) {
         
+        __weak typeof(self)weakSelf = self;
        ToastView *toastView = [ToastView show:[NSString stringWithFormat:@"ios端 接收到 flutter传来的方法 参数:%@",call.arguments] rootVc:self.application.windows.firstObject.rootViewController];
         dispatch_async(dispatch_get_main_queue(), ^{
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                 
                 [toastView cancel];
-                [self.channel invokeMethod:@"nativeToFlutter" arguments:@"ios 参数"];
+                [weakSelf.channel invokeMethod:@"nativeToFlutter" arguments:@"ios 参数"];
             });
         });
+        
         result(@(YES));
       } else {
       result(FlutterMethodNotImplemented);
@@ -58,8 +102,32 @@ NSString *const NAMESPACE = @"plugins.zsh.com/zsh_demo";
     return YES;
 }
 
-@end
+- (void)timer {
+    
+    __weak typeof(self)weakSelf = self;
+    // GCD定时器
+    static dispatch_source_t _timer;
+    //设置时间间隔
+    NSTimeInterval period = 5.f;
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    _timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, queue);
+    dispatch_source_set_timer(_timer, dispatch_walltime(NULL, 0), period * NSEC_PER_SEC, 0);
+    // 事件回调
+    dispatch_source_set_event_handler(_timer, ^{
+        dispatch_async(dispatch_get_main_queue(), ^{
 
+            self->_time ++;
+            if (weakSelf.streamHandler.sink != nil) {
+                weakSelf.streamHandler.sink([NSString stringWithFormat:@"%d",self->_time]);
+            }
+        });
+    });
+
+    // 开启定时器
+    dispatch_resume(_timer);
+}
+
+@end
  
 
 @interface ToastView ()

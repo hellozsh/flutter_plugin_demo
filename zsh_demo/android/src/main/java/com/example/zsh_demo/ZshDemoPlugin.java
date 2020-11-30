@@ -16,11 +16,15 @@ public class ZshDemoPlugin implements FlutterPlugin, MethodCallHandler {
 
   private MethodChannel channel;
 
+
   @Override
   public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
 
     channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), NAMESPACE+"/testChannel");
     channel.setMethodCallHandler(this);
+
+    LabelViewFactory factory = new LabelViewFactory(flutterPluginBinding.getBinaryMessenger());
+    flutterPluginBinding.getPlatformViewRegistry().registerViewFactory(NAMESPACE+"/labelView",factory);
   }
 
   @Override

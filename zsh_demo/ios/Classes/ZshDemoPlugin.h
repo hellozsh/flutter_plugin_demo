@@ -5,6 +5,7 @@
 @property (nonatomic, strong) FlutterMethodChannel* channel;
 
 @property (nonatomic, strong) UIApplication *application;
+ 
 
 @end
 

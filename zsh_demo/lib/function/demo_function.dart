@@ -52,5 +52,12 @@ class DemoFunction {
         .map((m) => m.arguments);
   }
 
+  /// 收到监听
+  Stream<String> receiveMessageStream() async* {
+
+    yield* eventChannel
+        .receiveBroadcastStream()
+        .map((text) => text);
+  }
 
 }

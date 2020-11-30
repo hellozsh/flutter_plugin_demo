@@ -72,7 +72,19 @@ class _MyAppState extends State<MyApp> {
             Container(
               height: 40,
               child: LabelWidget("flutter端写的参数"),
-            )
+            ),
+            StreamBuilder<String>(
+                stream:_demoFunction.receiveMessageStream(),
+                initialData: "",
+                builder: (c, snapshot) {
+                  final text = snapshot.data;
+
+                  return Container(
+                    height: 40,
+                    child:
+                    Text((snapshot?.data != null) ? '收到消息 $text' : ""),
+                  );
+                }),
           ],
         ),
       ),
