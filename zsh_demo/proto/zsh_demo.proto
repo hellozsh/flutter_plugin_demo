@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+
+option java_package = "com.example.zsh_demo";
+option java_outer_classname = "Protos";
+option objc_class_prefix = "Protos";
+
+
+message NIMAutoLoginData {
+
+    string account = 1;
+    string token = 2;
+    bool forcedMode = 3;
+    NIMLoginStep step = 4;
+}
+
+message NIMLoginStep {
+
+  enum State {
+    UN_KNOW = 0;
+    UN_LOGIN = 1;
+    FORBIDDEN = 2;
+    VER_ERROR = 3;
+  };
+  State state = 1;
+}
+
+

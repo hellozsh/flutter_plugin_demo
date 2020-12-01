@@ -13,6 +13,7 @@ dependencies:
     sdk: flutter
 
   oktoast: ^2.3.1
+  protobuf: "^1.0.1"
 
 dev_dependencies:
   flutter_test:
